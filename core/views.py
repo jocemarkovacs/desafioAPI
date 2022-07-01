@@ -1,4 +1,3 @@
-from wsgiref.util import request_uri
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
 
@@ -63,11 +62,13 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         serializer = VisitsSerializer(workspace.workspace_id.all(), many=True)
         return Response(serializer.data)
 
+
 class VisitViewSet(viewsets.ModelViewSet):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.visits = None
+        self.queryset = None
 
     queryset = Visits.objects.all()
     serializer_class = VisitsSerializer
@@ -85,42 +86,37 @@ class VisitViewSet(viewsets.ModelViewSet):
         
         if data is not None:
             queryset = queryset.filter(dataField=data)
-        
-        if depth == '1':
-            print('entrou no depth')
-            VisitsSerializer.Meta.depth = 1
-        if depth == '0':
-            VisitsSerializer.Meta.depth = 0
 
-        app = 0
-        site = 0
-        
-        for object in queryset:            
-            if object.workspace_id == 1:
-                app += 1
-            if object.workspace_id == 2:
-                site += 1
+        app = queryset.filter(workspace_id=1).count()
+        site = queryset.filter(workspace_id=2).count()
 
         self.visits = {	
             "visits":{
-            "app": {app}, "site": {site}
+                "app": {app}, "site": {site}
             }
         }
-        print(f'VISITS: {self.visits}')
-        query = list(queryset)
-        # print(f'QUERYSET: {query}') 
-        for object in queryset:            
-            print(object.id)
 
+        # print(f'VISITS: {self.visits}')            
+        
+        if depth is not None:
+            if depth == '1':
+                VisitsSerializer.Meta.depth = 1
+            if depth == '0':
+                VisitsSerializer.Meta.depth = 0
+
+        list=[]
+        for object in queryset:
+            object1 = object.__dict__
+            object1['visits']=self.visits
+            
+            print(object1)
+            list.append(object1.__class__)
+        
+        list = dict(list)
+        queryset=list   
+        
         return queryset
 
-    # @action(detail=True, methods=['get'])
-    # def visits(self, request, pk=None):
-
-    #     visit = self.get_object()
-    #     visit = visit.filter(dataField=request)
-    #     serializer = VisitsSerializer(visit, many=True)
-    #     print(f'SERIALIZER.DATA: {serializer.data}')
-    #     return Response(serializer.data)
+    
             
 
