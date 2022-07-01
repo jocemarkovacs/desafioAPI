@@ -104,16 +104,15 @@ class VisitViewSet(viewsets.ModelViewSet):
             if depth == '0':
                 VisitsSerializer.Meta.depth = 0
 
-        list=[]
+        
         for object in queryset:
             object1 = object.__dict__
             object1['visits']=self.visits
             
             print(object1)
-            list.append(object1.__class__)
         
-        list = dict(list)
-        queryset=list   
+        
+        
         
         return queryset
 
